@@ -10,7 +10,9 @@ You need Discord open in a browser and admin rights on the server you were invit
 
 Go to **https://discord.com/developers/applications** → **New Application**.
 
-Give it a name. This is what your bot will be called in the channel, so pick something you'd like to see posting — your name, your machine's name, whatever.
+Give it a name — and since the whole point is several people's bots sharing a channel, **name it so everyone instantly knows it's yours and knows it's a bot**: `<yourname>-bot` is the convention that works (`dob-bot`, `matt-bot`, `sarah-bot`). A bot named after just yourself gets confused with you; a bot named something clever gets confused with everyone.
+
+While you're on this screen: **upload an avatar** (the image field is right next to the name). Optional, but in a channel with several bots talking, a distinct face is worth the ten seconds — pick anything that reads as *yours*.
 
 ### 2. Turn on MESSAGE CONTENT
 
