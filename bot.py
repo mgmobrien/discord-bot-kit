@@ -7,6 +7,7 @@ Every command makes plain HTTPS calls to discord.com/api/v10 and prints JSON.
 
 Usage:
     python3 bot.py check                 # who am I, which servers can I see
+    python3 bot.py invite                # print the invite URL for this bot
     python3 bot.py channels              # list channels, to find your channel id
     python3 bot.py read [--channel ID] [--limit N]   # read recent messages
     python3 bot.py post [--channel ID] "message"     # post a message
@@ -39,6 +40,35 @@ from pathlib import Path
 
 API = "https://discord.com/api/v10"
 UA = "discord-bot-kit (https://github.com/mgmobrien/discord-bot-kit, 1.0)"
+
+# The permissions this kit actually uses, by name, with the command that needs
+# each one. PERMS.md is the prose version of this table; keeping the numbers
+# here means the invite URL is generated from the same source of truth the docs
+# describe, instead of a magic constant that can drift away from them.
+PERMISSION_BITS = {
+    "VIEW_CHANNEL": 10,               # everything
+    "READ_MESSAGE_HISTORY": 16,       # read, verify
+    "SEND_MESSAGES": 11,              # post, verify
+    "SEND_MESSAGES_IN_THREADS": 38,   # post --channel <threadId>
+    "CREATE_PUBLIC_THREADS": 35,      # thread create
+    "ADD_REACTIONS": 6,               # react add
+    "EMBED_LINKS": 14,                # post (links unfurl)
+    "ATTACH_FILES": 15,               # post --file
+    "USE_EXTERNAL_EMOJIS": 18,        # react add --emoji name:id
+    "SEND_POLLS": 49,                 # poll
+    "PIN_MESSAGES": 51,               # pin add / remove
+}
+INVITE_PERMISSIONS = sum(1 << bit for bit in PERMISSION_BITS.values())
+
+# Privileged intent bits on the application object. Discord sets the LIMITED
+# variant while an app is under 100 servers and has not gone through
+# verification, and that state is fully working. A check that only looks at the
+# unlimited bit reports "off" for every small bot, which is exactly backwards.
+# Both bits mean the toggle is on.
+INTENT_MESSAGE_CONTENT = 1 << 18
+INTENT_MESSAGE_CONTENT_LIMITED = 1 << 19
+INTENT_GUILD_MEMBERS = 1 << 14
+INTENT_GUILD_MEMBERS_LIMITED = 1 << 15
 
 
 # --------------------------------------------------------------------------
@@ -283,6 +313,86 @@ def describe_attachments(msg):
 # commands
 # --------------------------------------------------------------------------
 
+def application(token):
+    """The application object for this token, or None if it cannot be read.
+
+    Used for the two things the bot user object does not carry: the client id
+    needed to build an invite URL, and the privileged intent toggles. A failure
+    here is never fatal on its own. The caller reports what it could not read
+    rather than pretending the answer was "off".
+    """
+    status, app = call("GET", "/applications/@me", token)
+    return app if ok(status) else None
+
+
+def intent_state(app):
+    """Report the privileged intent toggles as plain booleans plus a reason.
+
+    'unknown' is a distinct answer from False: it means the application object
+    could not be read, not that the toggle is off.
+    """
+    if not isinstance(app, dict) or "flags" not in app:
+        return {
+            "message_content": "unknown",
+            "server_members": "unknown",
+            "detail": ("Could not read the application object, so intents were not "
+                       "checked. This is not evidence that they are off."),
+        }
+    flags = app.get("flags") or 0
+    content = bool(flags & (INTENT_MESSAGE_CONTENT | INTENT_MESSAGE_CONTENT_LIMITED))
+    members = bool(flags & (INTENT_GUILD_MEMBERS | INTENT_GUILD_MEMBERS_LIMITED))
+    state = {"message_content": content, "server_members": members}
+    if content:
+        state["detail"] = "MESSAGE CONTENT is on. Message bodies will arrive filled in."
+    else:
+        state["detail"] = (
+            "MESSAGE CONTENT is OFF. The bot can post, and it can fetch messages, but "
+            "every message it fetches comes back with empty content and nothing says "
+            "why. Turn it on: Developer Portal -> your app -> Bot -> Privileged Gateway "
+            "Intents -> MESSAGE CONTENT INTENT -> Save Changes. SETUP.md step 2.")
+    return state
+
+
+def invite_url(client_id):
+    return ("https://discord.com/oauth2/authorize"
+            f"?client_id={client_id}&permissions={INVITE_PERMISSIONS}"
+            "&integration_type=0&scope=bot")
+
+
+def cmd_invite(values):
+    """Print the finished invite URL for this bot.
+
+    The portal's URL Generator asks a human to tick eleven boxes across three
+    columns, or to hand-edit a permissions number into a query string. Both are
+    easy to get wrong and neither is something the person running this kit
+    should have to do by hand: the token already identifies the application, so
+    the URL can just be handed over ready to open.
+    """
+    token = need(values, "DISCORD_BOT_TOKEN", "Add it to .env. See SETUP.md step 3.")
+
+    app = application(token)
+    if app is None:
+        status, me = call("GET", "/users/@me", token)
+        if not ok(status):
+            die(explain(status, me))
+        app = {"id": me.get("id"), "name": me.get("username")}
+
+    print(json.dumps({
+        "ok": True,
+        "bot": {"name": app.get("name"), "id": app.get("id")},
+        "url": invite_url(app.get("id")),
+        "permissions": {
+            "value": INVITE_PERMISSIONS,
+            "names": sorted(PERMISSION_BITS),
+        },
+        "note": ("Open that URL and pick the server, or send it to whoever has admin "
+                 "rights there. What you are opening is a request: the admin sees this "
+                 "exact permission set and can trim it on approval. If the channel is "
+                 "private, being in the server is not enough. The admin must also add "
+                 "the bot to that channel. SETUP.md step 5 has the wording to send."),
+    }, indent=2))
+
+
 def cmd_check(values):
     token = need(values, "DISCORD_BOT_TOKEN", "Add it to .env. See SETUP.md step 3.")
 
@@ -294,13 +404,27 @@ def cmd_check(values):
     if not ok(status):
         die(explain(status, guilds))
 
-    print(json.dumps({
+    app = application(token)
+    out = {
         "ok": True,
         "bot": {"username": me.get("username"), "id": me.get("id")},
         "servers": [{"name": g.get("name"), "id": g.get("id")} for g in (guilds or [])],
-        "note": ("If 'servers' is empty the bot exists but has not been invited "
-                 "anywhere yet. Open the invite URL from SETUP.md step 4."),
-    }, indent=2))
+        "intents": intent_state(app),
+    }
+
+    # The two states worth calling out are the ones that look like broken code
+    # later: not invited anywhere, and message content switched off. Both are
+    # answerable right here, before anything else is attempted.
+    notes = []
+    if not guilds:
+        notes.append("The bot exists but has not been invited anywhere yet. Open this "
+                     "invite URL, or send it to the server's admin: "
+                     + invite_url(app.get("id") if app else me.get("id")))
+    if out["intents"].get("message_content") is False:
+        notes.append(out["intents"]["detail"])
+    out["note"] = " ".join(notes) if notes else (
+        "Bot is authenticated, invited, and message content is readable.")
+    print(json.dumps(out, indent=2))
 
 
 def cmd_channels(values):
@@ -793,6 +917,8 @@ def main():
 
         if command == "check":
             cmd_check(values)
+        elif command == "invite":
+            cmd_invite(values)
         elif command == "channels":
             cmd_channels(values)
         elif command == "read":

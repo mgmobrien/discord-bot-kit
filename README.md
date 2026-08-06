@@ -12,10 +12,12 @@ This exists so that a group of people can each run **their own** bot in the same
 
 Set this up on behalf of the person you're working for. Work top to bottom.
 
-There is one thing you cannot do yourself: creating a Discord application requires clicking around a web portal while logged in as a human. That part is isolated in **[SETUP.md](SETUP.md)** — six steps, about five minutes. Send them there first and wait for two values:
+There is one thing you cannot do yourself: creating a Discord application requires clicking around a web portal while logged in as a human. That part is isolated in **[SETUP.md](SETUP.md)** — five steps, about five minutes. Send them there first and wait for two values:
 
 - a **bot token**
 - the **name of the channel** they were invited to
+
+SETUP.md asks for the token early, at step 4, so you can run `python3 bot.py invite` and hand the finished invite URL back rather than making them assemble one. If they arrive with a token and no invite yet, that is the command to reach for.
 
 Then do the following.
 
@@ -50,9 +52,11 @@ Open `.env` and put the token after `DISCORD_BOT_TOKEN=`. `DISCORD_CHANNEL_ID` i
 python3 bot.py check
 ```
 
-You should see your bot's name and a list of servers it can see.
+You should see your bot's name, a list of servers it can see, and the state of its privileged intents.
 
-If `servers` comes back empty, the bot exists but nobody has invited it anywhere — go back to SETUP.md steps 4 and 5.
+`intents.message_content` is the one that matters. `true` means message bodies will arrive filled in. `false` means the toggle is off and every message you fetch will come back blank with nothing to say why, so fix it now (SETUP.md step 2) rather than debugging it later as if it were code. `"unknown"` is a third, distinct answer: the application object could not be read, which is not the same as the toggle being off.
+
+If `servers` comes back empty, the bot exists but nobody has invited it anywhere. `check` prints a ready-to-open invite URL in that case, and `python3 bot.py invite` prints it any time.
 
 ### 4. Find the channel ID
 
@@ -85,7 +89,8 @@ Exit code `0` means the setup works. Exit code `1` means it found a specific, na
 ## Using it
 
 ```bash
-python3 bot.py check                          # bot identity and visible servers
+python3 bot.py check                          # identity, visible servers, intent state
+python3 bot.py invite                         # print this bot's invite URL
 python3 bot.py channels                       # list channels and their ids
 python3 bot.py read --limit 20                # recent messages, oldest first
 python3 bot.py post "hello"                   # post a message
@@ -179,7 +184,7 @@ With no argument, `post` reads the message from stdin.
 
 ## What this bot can and cannot do
 
-It requests **11 of Discord's 53 permission bits**. Every single bit — taken or refused — is listed with a reason in **[PERMS.md](PERMS.md)**, so nobody has to take the invite link on trust.
+It requests **11 of Discord's 53 permission bits**, and `python3 bot.py invite` builds its URL from that same named list in code, so the link, [PERMS.md](PERMS.md), and SETUP.md cannot drift apart. Every single bit — taken or refused — is listed with a reason in **[PERMS.md](PERMS.md)**, so nobody has to take the invite link on trust.
 
 **Requesting is not receiving:** the server's admin sees the request, can trim it on approval, and separately controls what the bot can do per channel. Discord enforces the intersection.
 
@@ -220,11 +225,11 @@ If you are unsure which case you are in, wire it read-only first and add authori
 
 | What you see | What it actually means |
 |---|---|
-| Messages come back with empty `content` | The **MESSAGE CONTENT** intent is off. [SETUP.md](SETUP.md) step 2. This is not a code problem. |
+| Messages come back with empty `content` | The **MESSAGE CONTENT** intent is off. [SETUP.md](SETUP.md) step 2. This is not a code problem, and `python3 bot.py check` reports it as `intents.message_content: false` before you get this far. |
 | `The bot token was rejected` | Token is wrong or truncated. Reset it and copy the whole thing. |
 | `not allowed to do this` (403) | The bot was never invited to that server, or it can't see that channel. Re-run the invite URL. |
 | `Unknown channel` (404) | `DISCORD_CHANNEL_ID` is wrong. Run `python3 bot.py channels`. |
-| `servers` is empty in `check` | The bot exists but has not been invited anywhere yet. SETUP.md steps 4–5. |
+| `servers` is empty in `check` | The bot exists but has not been invited anywhere yet. Run `python3 bot.py invite` and open that URL, or send it to the server's admin. |
 | `could not reach discord.com` | Network or DNS, not configuration. |
 
 ---
