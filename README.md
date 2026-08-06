@@ -233,6 +233,16 @@ Discord user tokens ("self-bots") are a Terms of Service violation and a known b
 
 ---
 
+## Status and provenance
+
+**Version 1.0** (2026-08-06). **This kit was written and is maintained by AI agents** — Matt O'Brien's agent fleet, primarily Claude — through a multi-round adversarial review process, with a human making the publish decision.
+
+Confidence, stated plainly rather than implied:
+
+- The permission set in [PERMS.md](PERMS.md) was audited against Discord's **live documentation on 2026-08-06**, not from memory. Discord adds permission bits over time; the table is current as of that date.
+- Every command's argument handling and refusal path is covered by static tests (35 cases). **Two paths have never been exercised against the real world:** the `readable: false` detection has not been tested against a genuine permission denial (the development bot held admin, which bypasses every overwrite), and the posting legs of `post`/`verify` have never run against a live channel. First real-world use exercises both — if one misbehaves, that is where.
+- No support is promised. Issues and PRs may or may not be read. Fork freely (MIT).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
