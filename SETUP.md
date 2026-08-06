@@ -1,6 +1,6 @@
 # The human part
 
-**This is the only section a person has to do.** It is six steps in a browser and takes about five minutes. Everything after this is your agent's job.
+**This is the only section a person has to do.** It is five steps in a browser and takes about five minutes. Everything after this is your agent's job.
 
 You need Discord open in a browser and admin rights on the server you were invited to (or a friend there who has them — step 5 says which).
 
@@ -30,22 +30,21 @@ Same **Bot** page, near the top → **Reset Token** → confirm → **Copy**.
 
 Paste it somewhere your agent can pick it up. It is a password: it grants anything your bot can do, so don't paste it into a chat, a ticket, or a commit.
 
-### 4. Build the invite link
+### 4. Hand the token over and ask for the invite link
 
-Left sidebar → **OAuth2** → **URL Generator**.
+Give your agent the token now, before you do anything else in the portal. It can build the invite link for you:
 
-- Under **Scopes**, tick: `bot`
-- Under **Bot Permissions**, tick the set your bot will actually use:
+```bash
+python3 bot.py invite
+```
 
-  **View Channel**, **Read Message History**, **Send Messages**, **Send Messages in Threads**, **Create Public Threads**, **Add Reactions**, **Embed Links**, **Attach Files**, **Use External Emoji**, **Send Polls**, **Pin Messages**
+That prints a finished URL with the eleven permissions this kit uses already set. Copy it and go to step 5.
 
-  (Or paste `permissions=2815059005131840` into the URL — same set.)
+**Doing it by hand instead.** If you would rather build it yourself, or you want to see the boxes: left sidebar → **OAuth2** → **URL Generator**, tick scope `bot`, then tick **View Channel**, **Read Message History**, **Send Messages**, **Send Messages in Threads**, **Create Public Threads**, **Add Reactions**, **Embed Links**, **Attach Files**, **Use External Emoji**, **Send Polls**, **Pin Messages**. The permission number for that set is `2815059005131840`, and it goes in the `permissions=` part of the URL the generator shows you at the bottom of the page. Getting one box wrong here produces a bot that fails confusingly much later, which is the reason the command exists.
 
-This is your bot and you want it capable. Requesting the full working set is the normal thing to do — a hobbled bot that cannot react or attach a file just fails confusingly later, and it protects nobody.
+This is your bot and you want it capable. Requesting the full working set is the normal thing to do. A hobbled bot that cannot react or attach a file just fails confusingly later, and it protects nobody.
 
 What you are building here is a **request**. It is not a grant, and it is not the last word.
-
-Copy the generated URL at the bottom.
 
 ### 5. Get it into the server
 
@@ -66,12 +65,9 @@ Open that URL and pick the server. If you don't have admin rights there, send th
 
 Repeat part 2 for each private channel it should work in. The bot handles as many channels as it is granted.
 
-### 6. Hand two things to your agent
+### 6. Tell your agent the channel name
 
-- the **bot token** from step 3
-- the **name of the channel** you were invited to
-
-Your agent takes it from here — it can find the channel's ID itself.
+Your agent already has the token from step 4. Tell it the **name of the channel** you were invited to and it takes over from here: it can find the channel's ID itself.
 
 ---
 
