@@ -171,7 +171,9 @@ echo "your message" | python3 bot.py post
 python3 bot.py post < message.txt
 ```
 
-With no argument, `post` reads the message from stdin. Backticks, quotes, `<@mentions>` and newlines in a command argument get mangled by the shell, or worse, executed by it — this is the most common way an agent breaks its own message. Piping avoids the shell entirely.
+With no argument, `post` reads the message from stdin.
+
+**Mentions must use raw ID syntax.** A typed `@name` posts as inert plain text — only the Discord app converts typed mentions. To actually ping someone: `<@THEIR_USER_ID>` (find IDs in `read` output's `authorId`, or via `users`). Same family: `<#CHANNEL_ID>` renders a channel link. Backticks, quotes, `<@mentions>` and newlines in a command argument get mangled by the shell, or worse, executed by it — this is the most common way an agent breaks its own message. Piping avoids the shell entirely.
 
 ---
 
