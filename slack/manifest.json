@@ -1,0 +1,67 @@
+{
+  "_readme": [
+    "TEMPLATE. Change the three YOURNAME strings below before pasting this into Slack.",
+    "https://api.slack.com/apps -> Create New App -> From an app manifest.",
+    "Every scope is justified in SCOPES.md. Trim before installing if you want a smaller",
+    "surface -- that is a reasonable thing to want, and SCOPES.md says what each one costs.",
+    "Slack ignores unknown top-level keys, so this comment block is safe to paste as-is.",
+    "NOTE: channels:manage is deliberately ABSENT. Adding it lets the bot create, rename and",
+    "archive channels, and voids the 'requests nothing administrative' property."
+  ],
+  "display_information": {
+    "name": "YOURNAME Bot",
+    "description": "YOURNAME's agent seat in this workspace. Each person runs their own <name>-bot.",
+    "background_color": "#2f5d62"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "YOURNAME Bot",
+      "always_online": false
+    },
+    "app_home": {
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "user": [
+        "identify"
+      ],
+      "bot": [
+        "team:read",
+        "channels:read",
+        "channels:history",
+        "channels:join",
+        "channels:write.invites",
+        "groups:read",
+        "groups:history",
+        "groups:write.invites",
+        "chat:write",
+        "chat:write.customize",
+        "reactions:read",
+        "reactions:write",
+        "pins:read",
+        "pins:write",
+        "files:read",
+        "files:write",
+        "users:read",
+        "conversations.connect:write",
+        "im:read",
+        "im:write",
+        "im:history"
+      ]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false,
+    "event_subscriptions": {
+      "bot_events": []
+    },
+    "interactivity": {
+      "is_enabled": false
+    }
+  }
+}
