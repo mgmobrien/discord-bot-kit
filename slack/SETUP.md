@@ -2,22 +2,20 @@
 
 **Name your bot after yourself, not after the team.** `<yourname>-bot` for the app, `<Name> Bot` for the display name — `alex-bot` / `Alex Bot`, `sam-bot` / `Sam Bot`.
 
-This matters more than it sounds and it is the one decision you cannot cheaply undo. The point of this kit is that **each person runs their own bot in the same channels**. A bot named after the company or the team — "Acme Bot", "Team Assistant" — claims the whole workspace: the second person to set one up has no name left, and nobody reading a channel can tell whose agent said what. In a channel with three bots, the name is the only thing distinguishing them.
-
-**Give it an avatar.** In a room full of bots the icon is doing the work your eye actually uses — the name is small and grey, the icon is not. A distinct colour per person is enough.
+This matters more than it sounds, and getting it wrong costs a rebuild: **renaming the app afterwards does not rename the bot user** — to actually change it you delete the app and create it again. The point of this kit is that **each person runs their own bot in the same channels**. A bot named after the company or the team — "Acme Bot", "Team Assistant" — claims the whole workspace: the second person to set one up has no name left, and nobody reading a channel can tell whose agent said what. In a channel with three bots, the name is the only thing distinguishing them.
 
 ---
 
 ## What you are about to do
 
-Slack needs **two tokens** from **two separate installs**, and they are not interchangeable:
+Slack gives you **two tokens**, and they are not interchangeable:
 
 | Token | Starts with | Acts as | You need it for |
 |---|---|---|---|
 | **Bot token** | `xoxb-` | the bot itself | posting, reading, reacting — almost everything |
 | **User token** | `xoxp-` | *you*, the human | the few actions Slack will not let a bot do on its own |
 
-You will install the app twice: once for the bot, once for yourself. The second install is easy to forget, and its absence shows up much later as a confusing permission error on one specific command rather than as an obvious failure at setup.
+**One install gives you both**, because [`manifest.json`](manifest.json) requests user scopes alongside the bot scopes. You do not install twice. Both tokens appear on the same page after you click Allow.
 
 This kit uses the Slack **Web API only** — outbound calls, no daemon, no listener, no socket mode, nothing that needs a public URL or that keeps running in the background. You run a command, it makes an HTTPS request, it prints JSON, it exits.
 
@@ -33,7 +31,7 @@ Go to <https://api.slack.com/apps> → **Create New App** → **From an app mani
 
 Before pasting, change the three placeholder strings — they appear on lines you cannot miss:
 
-- `"name": "YOURNAME Bot"` → `"Alex Bot"`
+- `"name": "YOURNAME Bot"` → `"Alex Bot"` — **name it after yourself, not the team** (`<yourname>-bot` / `<Name> Bot`)
 - `"display_name": "YOURNAME Bot"` → the same
 - `"description"` → whatever you want people to read in the app directory
 
@@ -47,19 +45,21 @@ You land on a page showing a **Bot User OAuth Token** starting `xoxb-`. Copy it.
 
 > If your workspace requires admin approval for apps, this is where it stops and waits for an admin. That is normal and not a failure.
 
-**3. Install it for yourself (this gives you the USER token).**
+**3. Copy the USER token from the same page.**
 
-Same **Install App** page. If a **User OAuth Token** starting `xoxp-` is already shown, copy it and you are done with this step.
+Still on **Install App**: a **User OAuth Token** starting `xoxp-` is shown below the bot token. Copy it too.
 
-If it is not shown, the user scopes were not requested — check that the `user` block survived your manifest edit, then reinstall.
+If it is missing, the `user` block did not survive your manifest edit. Put it back and reinstall — a scope CHANGE is the one thing that genuinely requires reinstalling.
 
 **4. Upload an icon.**
 
-**Basic Information** → **Display Information** → App icon. Any square image. This is the single highest-value cosmetic step in the whole setup: in a channel with several bots it is what people actually read.
+**Basic Information** → **Display Information** → App icon. Any square image; a distinct colour per person is enough. This is the single highest-value cosmetic step in the whole setup: in a channel with several bots it is what people actually read.
 
-**5. Put the bot in a REAL channel — not a test one.**
+**5. Create a real channel, then put the bot in it.**
 
-In Slack, go to the channel the bot should live in and type:
+**If this is a new workspace, make a channel first.** A new Slack workspace starts with only its default `#all-<workspace>` channel, and that is not the one to use — create the channel the work will actually happen in, then invite the bot there. Doing external invites out of the workspace default is the shape to avoid.
+
+In Slack, go to that channel and type:
 
 ```
 /invite @alex-bot
@@ -67,7 +67,7 @@ In Slack, go to the channel the bot should live in and type:
 
 **Use the real channel you actually intend it to work in, on the first try.** A bot that works perfectly in `#bot-testing` tells you nothing about `#general`: private channels need different scopes than public ones, and channel membership is per channel. Testing somewhere else and moving later means doing the diagnosis twice, and the second time you will believe the first result.
 
-**6. If you need to invite people from outside the workspace**, do it per email address, and only after the channel exists and the bot is in it:
+**6. (Only if you need outside people.)** To invite someone from outside the workspace, do it per email address, and only after the channel exists and the bot is in it:
 
 - Slack → the channel → **Add people** → enter the email address
 - Or hand the agent the addresses and let it use `invite` (see the README) — it calls `conversations.inviteShared`, which takes **one email per person** and requires the bot to already be a member of that channel

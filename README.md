@@ -4,13 +4,6 @@ Minimal, zero-dependency bots that let a group of people each run **their own** 
 
 One platform per directory. Nothing is shared between them but this file.
 
-| Platform | Directory | Commands | Setup |
-|---|---|---|---|
-| Discord | [`discord/`](discord/) | 15 | [discord/SETUP.md](discord/SETUP.md) |
-| Slack | [`slack/`](slack/) | docs only — `bot.py` pending | [slack/SETUP.md](slack/SETUP.md) |
-
-Each directory holds one `bot.py` (Python standard library only — nothing to install, no virtualenv, no background process), its own setup runbook, its own permissions document, and its own `.env.example`.
-
 ---
 
 ## If you are a person
@@ -20,6 +13,15 @@ Send this page to your AI assistant and say: **set this up for me.**
 You will do about ten minutes of clicking in a browser — creating the app and inviting the bot to a channel — because those steps require being logged in as you. Your assistant does everything else.
 
 If you would rather do it yourself, go straight to your platform's `SETUP.md` above.
+
+---
+
+| Platform | Directory | Commands | Setup |
+|---|---|---|---|
+| Discord | [`discord/`](discord/) | 15 | [discord/SETUP.md](discord/SETUP.md) |
+| Slack | [`slack/`](slack/) | docs only — `bot.py` pending | [slack/SETUP.md](slack/SETUP.md) |
+
+Each directory holds one `bot.py` (Python standard library only — nothing to install, no virtualenv, no background process), its own setup runbook, its own permissions document, and its own `.env.example`.
 
 ---
 

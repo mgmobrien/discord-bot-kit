@@ -6,7 +6,7 @@ What this document does instead: every scope in [`manifest.json`](manifest.json)
 
 **Requesting is not receiving.** A workspace admin sees the whole list at install, can refuse the app outright, and separately controls which channels the bot is in. Slack enforces the intersection, and channel membership is a separate axis from scopes entirely.
 
-**Editing scopes requires a reinstall.** Changing the manifest does nothing to an already-installed app until it is installed again. `missing_scope` after a manifest edit almost always means the reinstall was skipped.
+**Changing scopes requires a reinstall.** Editing the manifest does nothing to an already-installed app until it is installed again, and `missing_scope` after a manifest edit almost always means that step was skipped. This is the *only* thing that needs a second install — one install returns both the bot and user tokens, because the manifest requests both.
 
 ---
 
@@ -63,7 +63,7 @@ Each of these is a scope a reasonable person might expect, and each is left out 
 | `admin.*` | Workspace administration. Nothing here needs it and it should be very hard to obtain by accident. |
 | `search:read` | Workspace-wide search across everything the token can reach. A large read surface for a capability no command uses. |
 | `usergroups:write`, `bookmarks:write`, `canvases:write`, `links:write` | Write access to workspace furniture no command touches. |
-| `dnd:read`, `emoji:read`, `metadata.message:read`, `usergroups:read`, `bookmarks:read`, `canvases:read` | Read scopes for objects no command reads. They are cheap and harmless, which is exactly why they accumulate — every one of them widens what a leaked token reaches, for no capability gained. |
+| `dnd:read`, `emoji:read`, `metadata.message:read`, `usergroups:read`, `bookmarks:read`, `canvases:read`, `app_mentions:read`, `mpim:read`, `mpim:history`, `mpim:write` | Read scopes for objects no command reads. They are cheap and harmless, which is exactly why they accumulate — every one of them widens what a leaked token reaches, for no capability gained. |
 
 ---
 
@@ -98,5 +98,5 @@ Worth reading if you know the Discord kit, because the differences are not cosme
 - **No content intent.** Discord's single biggest documented footgun — the MESSAGE CONTENT intent, off by default, making every message come back blank — has no Slack equivalent. Slack's analogous silent failure is channel membership, above.
 - **Named scopes, not bits.** No `permissions=2815059005131840` shortcut, and no fixed universe to enumerate exhaustively.
 - **Multi-identity is a scope, not a mechanism.** `chat:write.customize` versus Discord's separate send-only webhooks.
-- **Two tokens, two installs.** Discord has one bot token.
+- **Two tokens from one install.** Discord has one bot token; Slack returns a bot token and a user token together, because the manifest requests both scope sets.
 - **No poll primitive.** Discord has a native poll object behind `SEND_POLLS`. Slack does not: a poll is Block Kit elements plus interaction handling, which needs a request endpoint this kit deliberately does not have. `poll` therefore does not exist on the Slack side, and adding it would mean abandoning the no-daemon property.
