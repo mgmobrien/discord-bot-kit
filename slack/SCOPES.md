@@ -20,7 +20,7 @@ What this document does instead: every scope in [`manifest.json`](manifest.json)
 | `channels:join` | `join` | Let the bot add itself to a *public* channel, so a human does not have to. |
 | `groups:read` | `channels`, `check --channel` | The private-channel equivalent of `channels:read`. Without it, private channels are not merely unreadable — they are invisible, and indistinguishable from not existing. |
 | `groups:history` | `read`, `verify` | Read messages in a private channel the bot has been invited to. There is no self-join equivalent for private channels. |
-| `chat:write` | `post`, `reply`, `verify` | Post messages. |
+| `chat:write` | `post`, `reply`, `edit`, `delete`, `verify` | Post messages, and edit or delete the bot's **own**. Slack offers apps no way to modify anyone else's message, and this kit requests no scope that would change that. |
 | `chat:write.customize` | `post --as` | Post with a per-message username and icon. **This is the scope that replaces Discord's webhook workaround** — on Discord a bot has exactly one identity everywhere and expressive posting needs a separate send-only webhook; on Slack it is one scope on the normal send. |
 | `reactions:read` | `react list` | Read reactions on a message. |
 | `reactions:write` | `react add`, `react remove` | Add and remove the bot's **own** reactions. It cannot remove anyone else's. |
@@ -45,7 +45,14 @@ team:read  channels:read  channels:history  groups:read  groups:history
 users:read  reactions:read  pins:read  files:read
 ```
 
-Drop everything else from the manifest and reinstall. `check`, `channels`, `read` and `user` work; `post`, `reply`, `react`, `pin`, `invite` and `dm` all fail with `missing_scope`, which is the correct outcome — a read-only bot that silently keeps the ability to post is not read-only.
+Drop everything else from the manifest and reinstall. Exactly this much keeps working:
+
+**Works:** `check`, `check --channel`, `check --member`, `channels`, `read`, `threads`, `user`, `users`, `react list`, `pin list`. (`check --user` is unaffected either way — it reads the **user** token, whose `identify` scope is a separate axis from this bot-scope list.)
+**Fails with `missing_scope`:** `post`, `reply`, `edit`, `delete`, `join`, `react add`, `react remove`, `pin add`, `pin remove`, `invite`, `dm`, and `verify` — which posts, so it cannot run read-only by design.
+
+Those failures are the correct outcome: a read-only bot that silently keeps the ability to post is not read-only. Note that `react` and `pin` are split across the line — their `list` half is a read and their `add`/`remove` half is a write, so dropping the write scope leaves the verb present but half-disabled.
+
+Note also what the read-only set does **not** protect you from: it stops the bot writing, not the bot reading something it should not. Channel membership is still the axis that decides what it can see.
 
 Add write scopes back one at a time, once you know who is in the room. `chat:write` is the one that changes the risk, because it is the one that lets a prompt-injected agent act.
 

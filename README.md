@@ -19,7 +19,7 @@ If you would rather do it yourself, go straight to your platform's `SETUP.md` ab
 | Platform | Directory | Commands | Setup |
 |---|---|---|---|
 | Discord | [`discord/`](discord/) | 15 | [discord/SETUP.md](discord/SETUP.md) |
-| Slack | [`slack/`](slack/) | docs only — `bot.py` pending | [slack/SETUP.md](slack/SETUP.md) |
+| Slack | [`slack/`](slack/) | 16 | [slack/SETUP.md](slack/SETUP.md) |
 
 Each directory holds one `bot.py` (Python standard library only — nothing to install, no virtualenv, no background process), its own setup runbook, its own permissions document, and its own `.env.example`.
 

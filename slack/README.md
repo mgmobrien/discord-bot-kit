@@ -6,23 +6,32 @@ A minimal Slack bot for shared channels, in the same shape as [`discord/`](../di
 
 ---
 
-## ⚠ Status: docs are here, `bot.py` is not yet
+## ⚠ Status and confidence — read before trusting a path
 
-**This directory currently contains the setup path and the scope documentation. It does not yet contain `bot.py`.**
+`bot.py` is here: 16 commands, standard library only.
 
-Said plainly because [`SETUP.md`](SETUP.md) ends by telling a human to hand three values to an agent, and [`SCOPES.md`](SCOPES.md) maps scopes to commands that do not exist here yet. If you are following those docs end to end today, **you will complete every human step and then have nothing to run.** That is a real dead end and you should know about it before you start rather than after.
+**It has not yet been run against a real Slack workspace.** Every path below is written against the documented API and covered by an offline suite with stubbed responses, and **none of it is a substitute for having run it.** Said plainly, because the alternative is you discovering it.
 
-What is usable right now:
+| | |
+|---|---|
+| **Verified offline** | Error handling, the staged `check` logic, argument parsing, pagination, broadcast defanging, `ts` precision. 46 assertions, including mutants that prove the suite can fail. |
+| **UNEXERCISED — never run against Slack** | Every command. All 16. |
 
-- **[SETUP.md](SETUP.md)** — the app creation, two-token two-install sequence, icon, channel invite, and the external-invite recipe. All of it is independent of the client, so a workspace set up today is set up correctly for the client when it lands.
-- **[SCOPES.md](SCOPES.md)** — every scope in the manifest justified, and the notable refusals with reasons. Read this before installing if you want to trim.
+The two things most likely to be wrong in ways the offline suite cannot see are **`post --file`** (a three-step upload flow, and the middle step uploads to a host Slack names at runtime) and **`invite --email`** (Slack Connect, which involves approval on both sides).
+
+**Why it shipped in this state rather than exercised:** the only workspace available to test in had a token carrying **43 scopes against this manifest's 21** — including `chat:write.public`, which [SCOPES.md](SCOPES.md#deliberately-not-requested) deliberately refuses. That scope lets a bot post into a public channel **it has not joined**, so testing there would have returned a pass on `post`-to-an-unjoined-channel — the exact failure the membership section below is built around, and the one `check --member` exists to catch. A trimmed token would have failed loudly and harmlessly. A superset fails **silently, in the flattering direction.** Testing there would have produced a green label on the kit's single most important claim.
+
+So it is labelled honestly instead. The Discord side of this kit carries the same kind of note about two of its own paths.
+
+What is independently usable now:
+
+- **[SETUP.md](SETUP.md)** — app creation, the one install that returns both tokens, icon, channel invite, external-invite recipe. Independent of the client.
+- **[SCOPES.md](SCOPES.md)** — every scope justified, and the notable refusals with reasons. Read before installing if you want to trim.
 - **[manifest.json](manifest.json)** — paste-ready after changing three `YOURNAME` placeholders.
-
-`bot.py` follows in a second change, and it will be exercised against a real workspace before it is described as working. The Discord side of this kit carries an explicit note that two of its paths have never run against the real service; the point of holding this one back is to not add a third.
 
 ---
 
-## What the commands will be
+## The commands
 
 The verb set mirrors `discord/` where Slack supports the same thing, with three deliberate differences:
 
@@ -49,6 +58,8 @@ Code written against the Discord model does not port here, and this is the diffe
 **There is no `poll`.** Discord has a native poll object; Slack does not. A Slack poll is Block Kit elements plus interaction handling, which needs a request endpoint this kit deliberately does not have. Adding it would mean giving up the no-daemon property, so it is omitted rather than half-built.
 
 **`post --as`** uses `chat:write.customize` for a per-message name and icon — the thing Discord needs webhooks for.
+
+One more trap that is a naming collision rather than a capability difference, worth knowing if you are porting: **`invite` means something else here.** On the Discord side it prints the bot's own install URL. Slack has no such URL — installation is the manifest flow in [SETUP.md](SETUP.md) — so on this side `invite` adds **people** to a channel. Same word, unrelated action.
 
 ---
 
