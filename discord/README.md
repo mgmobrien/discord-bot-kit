@@ -202,6 +202,20 @@ If you want more than one identity posting — separate names and avatars per me
 
 ---
 
+## The read-only set
+
+If you are wiring an agent to a channel other people can write in, start here. Tick only these in the invite URL's permission list:
+
+```
+VIEW_CHANNEL   READ_MESSAGE_HISTORY
+```
+
+`check`, `channels`, `read`, `threads`, `user` and `users` work. `post`, `react`, `edit`, `delete`, `pin`, `thread create`, `poll` and `verify` fail — which is the correct outcome, because a read-only bot that silently keeps the ability to post is not read-only.
+
+Every bit is enumerated with its reason in [PERMS.md](PERMS.md). Add write permissions back one at a time, once you know who is in the room; `SEND_MESSAGES` is the one that changes the risk, because it is the one that lets a prompt-injected agent act.
+
+---
+
 
 ## Troubleshooting
 

@@ -4,14 +4,22 @@ Minimal, zero-dependency bots that let a group of people each run **their own** 
 
 One platform per directory. Nothing is shared between them but this file.
 
-| Platform | Directory | Setup |
-|---|---|---|
-| Discord | [`discord/`](discord/) | [discord/SETUP.md](discord/SETUP.md) |
-| Slack | [`slack/`](slack/) | [slack/SETUP.md](slack/SETUP.md) |
+| Platform | Directory | Commands | Setup |
+|---|---|---|---|
+| Discord | [`discord/`](discord/) | 15 | [discord/SETUP.md](discord/SETUP.md) |
+| Slack | [`slack/`](slack/) | docs only — `bot.py` pending | [slack/SETUP.md](slack/SETUP.md) |
 
 Each directory holds one `bot.py` (Python standard library only — nothing to install, no virtualenv, no background process), its own setup runbook, its own permissions document, and its own `.env.example`.
 
-**There is deliberately no shared connector layer.** The two backends have nothing in common but `urllib`, so an abstraction would be paid for immediately and bought nothing. Two parallel implementations in one repo diverge *visibly*, and that is the point: in separate repos the same divergence happens silently. If you are changing behaviour in one, diff it against the other and decide on purpose whether the difference is intended.
+---
+
+## If you are a person
+
+Send this page to your AI assistant and say: **set this up for me.**
+
+You will do about ten minutes of clicking in a browser — creating the app and inviting the bot to a channel — because those steps require being logged in as you. Your assistant does everything else.
+
+If you would rather do it yourself, go straight to your platform's `SETUP.md` above.
 
 ---
 
@@ -54,6 +62,12 @@ python3 bot.py post < message.txt
 
 ## Calibrate agent authority to who can post in the channel
 
+**Wire it read-only first. Add authority only once you know who can post in the room.**
+
+That is the whole rule. The rest of this section is why, and it is worth reading before you wire an agent to a channel anyone else can write in.
+
+Read-only is a concrete thing you can set up, not a posture: each platform names its exact read-only set — [discord/README.md](discord/README.md#the-read-only-set) and [slack/SCOPES.md](slack/SCOPES.md#the-read-only-set).
+
 Most people set this up so an AI agent reads a channel and acts on what it finds. If that is you, there are three separate layers of control, and **only the first belongs to the chat platform**.
 
 **1. Platform permissions.** What the bot may do: read, post, react, upload. You request them at install; an admin approves, trims, and separately controls per-channel access. The platform enforces the intersection. Covered in each platform's permissions document.
@@ -66,8 +80,6 @@ Most people set this up so an AI agent reads a channel and acts on what it finds
 - **A public channel must never feed anything with real authority.** Read-only summarising is fine. Anything that can act on what it reads will get prompt-injected, and quickly. This is not hypothetical; it is what happens.
 
 The failure is quiet: nothing breaks, no permission is violated, and your agent does exactly what the message told it to. The permission model cannot help, because from its side the message was posted legitimately by someone allowed to post.
-
-If you are unsure which case you are in, wire it read-only first and add authority once you know who is in the room.
 
 ---
 
@@ -88,6 +100,19 @@ Two agents coordinating through a public chat channel are coordinating over a me
 Each platform directory states its own confidence separately, including which code paths have and have not been exercised against the real service. Read that section before trusting a path you have not run yourself; the honest answer differs per platform and per version.
 
 No support is promised. Issues and PRs may or may not be read. Fork freely.
+
+---
+
+## Design notes
+
+For maintainers. Nothing here is needed to use the kit.
+
+**There is deliberately no shared connector layer.** The two backends have nothing in common but `urllib`, so an abstraction would be paid for immediately and buy nothing. Two parallel implementations in one repo diverge *visibly*, and that is the point: in separate repos the same divergence happens silently. If you change behaviour in one, diff it against the other and decide on purpose whether the difference is intended.
+
+**Slack's `check` takes a stage; Discord's does not.** Slack fails in stages — token, second token, can-see-channel, is-in-channel — and each stage has a different fix. One aggregate check would tell you something is wrong without telling you which, on the platform where the most common failure (not being a member of the channel) is invisible to every scope you could add.
+
+**There is no `poll` on the Slack side.** Discord has a native poll object; Slack does not. A Slack poll is Block Kit elements plus interaction handling, which needs a request endpoint — and this kit is deliberately outbound-only, with no daemon and no listener. Building it would cost the property the whole design rests on, so it is omitted rather than half-built.
+
 
 ## License
 

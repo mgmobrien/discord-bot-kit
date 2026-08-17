@@ -36,6 +36,21 @@ What this document does instead: every scope in [`manifest.json`](manifest.json)
 
 ---
 
+## The read-only set
+
+If you are wiring an agent to a channel other people can write in, start here. These scopes let the bot **see** and **report**, and give it no way to say anything:
+
+```
+team:read  channels:read  channels:history  groups:read  groups:history
+users:read  reactions:read  pins:read  files:read
+```
+
+Drop everything else from the manifest and reinstall. `check`, `channels`, `read` and `user` work; `post`, `reply`, `react`, `pin`, `invite` and `dm` all fail with `missing_scope`, which is the correct outcome — a read-only bot that silently keeps the ability to post is not read-only.
+
+Add write scopes back one at a time, once you know who is in the room. `chat:write` is the one that changes the risk, because it is the one that lets a prompt-injected agent act.
+
+---
+
 ## Deliberately not requested
 
 Each of these is a scope a reasonable person might expect, and each is left out on purpose.
